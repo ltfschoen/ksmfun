@@ -47,6 +47,14 @@ packages required to compile this template - please take note of the Rust compil
 cargo build --release
 ```
 
+### For testing locally with zombienet and fast runtime
+
+🔨 Use the following command to build the node without launching it:
+
+```sh
+cargo build --locked --release --features fast-runtime --bin polkadot --bin polkadot-prepare-worker --bin polkadot-execute-worker
+```
+
 🐳 Alternatively, build the docker image:
 
 ```sh
