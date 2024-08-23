@@ -9882,6 +9882,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-ksm-fun"
+version = "29.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-atomic-swap"
 version = "28.0.0"
 dependencies = [
@@ -12114,6 +12131,7 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
+ "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",

@@ -160,6 +160,40 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
 }
 
+// #[derive(
+// 	Encode,
+// 	Decode,
+// 	MaxEncodedLen,
+// 	Eq,
+// 	PartialEq,
+// 	Copy,
+// 	Clone,
+// 	RuntimeDebug,
+// 	PartialOrd,
+// 	Ord,
+// 	TypeInfo,
+// 	CompactAs,
+// 	Hash,
+// 	Serialize,
+// 	Deserialize,
+// )]
+// #[repr(transparent)]
+// #[serde(transparent)]
+// pub struct CurrencyId(pub u128);
+
+// pub type AssetId = u128;
+
+// impl pallet_assets::Config for Runtime{
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type Balance = Balance;
+// 	type AssetId = AssetId;
+// 	type NativeCurrency = Balances;
+
+
+// }
+
+
+
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICRO_UNIT;
