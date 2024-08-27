@@ -277,6 +277,8 @@ mod runtime {
 	pub type Balances = pallet_balances;
 	#[runtime::pallet_index(11)]
 	pub type TransactionPayment = pallet_transaction_payment;
+	#[runtime::pallet_index(12)]
+	pub type Assets = pallet_assets;
 
 	// Governance
 	#[runtime::pallet_index(15)]
