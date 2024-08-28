@@ -33,14 +33,14 @@ use frame_support::{
 	dispatch::DispatchClass,
 	parameter_types,
 	traits::{
-		ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin, VariantCountOf,
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin, VariantCountOf,
 	},
 	weights::{ConstantMultiplier, Weight},
 	PalletId,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureSigned
 };
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
@@ -159,6 +159,79 @@ impl pallet_balances::Config for Runtime {
 	type FreezeIdentifier = RuntimeFreezeReason;
 	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
 }
+
+// #[derive(
+// 	Encode,
+// 	Decode,
+// 	MaxEncodedLen,
+// 	Eq,
+// 	PartialEq,
+// 	Copy,
+// 	Clone,
+// 	RuntimeDebug,
+// 	PartialOrd,
+// 	Ord,
+// 	TypeInfo,
+// 	CompactAs,
+// 	Hash,
+// 	Serialize,
+// 	Deserialize,
+// )]
+// #[repr(transparent)]
+// #[serde(transparent)]
+// pub struct CurrencyId(pub u128);
+
+// pub type AssetId = u128;
+
+// impl pallet_assets::Config for Runtime{
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type Balance = Balance;
+// 	type AssetId = AssetId;
+// 	type NativeCurrency = Balances;
+
+
+// }
+
+pub type AssetIdForTrustBackedAssets = u32;
+
+pub const KSM: Balance = 1_000_000_000_000;
+
+parameter_types! {
+	pub const AssetDeposit: Balance = KSM;
+}
+
+parameter_types! {
+	pub const MetadataDepositBase: Balance = KSM;
+	pub const ApprovalDeposit: Balance = KSM;
+	pub const AssetAccountDeposit: Balance = KSM;
+	pub const MetadataDepositPerByte: Balance = 0;
+	pub const AssetsStringLimit: u32 = 50;
+}
+
+impl pallet_assets::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = u64;
+	type AssetId = AssetIdForTrustBackedAssets;
+	type AssetIdParameter = codec::Compact<AssetIdForTrustBackedAssets>;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type AssetDeposit = AssetDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type ApprovalDeposit = ApprovalDeposit;
+	type StringLimit = AssetsStringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+	type CallbackHandle = ();
+	type AssetAccountDeposit = AssetAccountDeposit;
+	type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
+}
+
+
 
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10

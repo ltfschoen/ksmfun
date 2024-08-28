@@ -51,6 +51,7 @@ pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
+pallet-assets = { workspace = true }
 
 # Substrate	Primitives
 sp-api = { workspace = true }
@@ -96,6 +97,7 @@ std = [
 	"cumulus-pallet-session-benchmarking/std",
 	"cumulus-pallet-xcm/std",
 	"cumulus-pallet-xcmp-queue/std",
+	"pallet-assets/std",
 	"cumulus-primitives-aura/std",
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-storage-weight-reclaim/std",
