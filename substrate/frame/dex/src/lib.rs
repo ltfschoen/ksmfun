@@ -1,9 +1,7 @@
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// pub use pallet::*;
+pub use pallet::*;
 
-// pub use crate::weights::WeightInfo;
 mod dex;
 mod types;
 mod math;
@@ -38,6 +36,8 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, Permill, TransactionOutcome,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+
+    use frame_support::traits::GenesisBuild;
 
 	#[derive(
 		Encode, Decode, MaxEncodedLen, CloneNoBound, PartialEq, Eq, TypeInfo,
@@ -282,36 +282,41 @@ pub mod pallet {
 		NotSwapped,
 	}
 
-	// #[cfg(feature = "std")]
-	// impl<T: Config> Default for GenesisConfig<T> {
-	// 	fn default() -> Self {
-	// 		Self { pools: vec![] }
-	// 	}
-	// }
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { pools: vec![] }
+		}
+	}
 
-	// #[pallet::genesis_config]
+	#[pallet::genesis_config]
 
-	// pub struct GenesisConfig<T: Config> {
-	// 	pub pools: sp_std::vec::Vec<(T::AccountId, T::AssetId, T::AssetId)>,
-	// }
+	pub struct GenesisConfig<T: Config> {
+		pub pools: sp_std::vec::Vec<(T::AccountId, T::AssetId, T::AssetId)>,
+	}
 
-    /*
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			let half = Permill::from_percent(50);
 			for (owner, base, quote) in self.pools.clone() {
-				let pool = <PoolInitConfigurationOf<T>>::DualAssetConstantProduct {
-					owner,
-					assets_weights: vec![(base, half), (quote, half)],
-					fee: <_>::default(),
-				};
 
-				<Pallet<T>>::do_create_pool(pool, None).expect("genesis is valid");
+				// let pool = <PoolInitConfigurationOf<T>>::DualAssetConstantProduct {
+				// 	owner,
+				// 	assets_weights: vec![(base, half), (quote, half)],
+				// 	fee: <_>::default(),
+				// };
+
+                todo!();
+
+				// <Pallet<T>>::do_create_pool(pool, None).expect("genesis is valid");
 			}
 		}
 	}
+
+    /*
+
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
