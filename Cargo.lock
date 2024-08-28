@@ -10538,9 +10538,11 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std 14.0.0",
 ]
 
 [[package]]

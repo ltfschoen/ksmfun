@@ -252,30 +252,30 @@ pub mod pallet {
 		Zero::zero()
 	}
 
-	// #[pallet::storage]
-	// #[pallet::getter(fn pool_count)]
-	// #[allow(clippy::disallowed_types)]
-	// pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
+	#[pallet::storage]
+	#[pallet::getter(fn pool_count)]
+	#[allow(clippy::disallowed_types)]
+	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
-	// #[pallet::storage]
-	// #[pallet::getter(fn pools)]
-	// pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, PoolConfigurationOf<T>>;
+	#[pallet::storage]
+	#[pallet::getter(fn pools)]
+	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, PoolConfigurationOf<T>>;
 
-	// #[pallet::storage]
-	// #[pallet::getter(fn twap)]
-	// #[pallet::unbounded]
-	// pub type TWAPState<T: Config> =
-	// 	StorageMap<_, Blake2_128Concat, T::PoolId, TWAPStateOf<T>, OptionQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn twap)]
+	#[pallet::unbounded]
+	pub type TWAPState<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, TWAPStateOf<T>, OptionQuery>;
 
-	// #[pallet::storage]
-	// #[pallet::getter(fn price_cumulative)]
-	// #[pallet::unbounded]
-	// pub type PriceCumulativeState<T: Config> =
-	// 	StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativeStateOf<T>, OptionQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn price_cumulative)]
+	#[pallet::unbounded]
+	pub type PriceCumulativeState<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativeStateOf<T>, OptionQuery>;
 
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)] // Allow for `ValueQuery` because of nonce
-	// pub type LPTNonce<T: Config> = StorageValue<_, u64, ValueQuery, Nonce<OneInit, SafeIncrement>>;
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)] // Allow for `ValueQuery` because of nonce
+	pub type LPTNonce<T: Config> = StorageValue<_, u64, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
 	pub(crate) enum PriceRatio {
 		Swapped,
