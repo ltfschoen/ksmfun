@@ -1,14 +1,15 @@
-use num_bigint::{BigUint, ToBigUint};
+use sp_core::U256;
 use sp_runtime::DispatchError;
 use crate::types::Pool;
+use alloc::vec::Vec;
 
 pub trait ConvertToBigUint {
-    fn get_big_uint(&self) -> BigUint;
+    fn get_big_uint(&self) -> U256;
 }
 
 impl ConvertToBigUint for u128 {
-    fn get_big_uint(&self) -> BigUint {
-        self.to_biguint().unwrap()
+    fn get_big_uint(&self) -> U256 {
+        U256::from(*self)
     }
 }
 
