@@ -48,14 +48,14 @@ use polkadot_runtime_common::{
 	xcm_sender::NoPriceForMessageDelivery, BlockHashCount, SlowAdjustingFeeUpdate,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, Permill};
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::BodyId;
 
 // Local module imports
 use super::{
 	weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-	AccountId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection, ConsensusHook, Hash,
+	AccountId, Aura, Balance, Balances, Assets, Block, BlockNumber, CollatorSelection, ConsensusHook, Hash,
 	MessageQueue, Nonce, PalletInfo, ParachainSystem, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session, SessionKeys,
 	System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS,
@@ -210,7 +210,7 @@ parameter_types! {
 
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Balance = u64;
+	type Balance = u128;
 	type AssetId = AssetIdForTrustBackedAssets;
 	type AssetIdParameter = codec::Compact<AssetIdForTrustBackedAssets>;
 	type Currency = Balances;
@@ -230,6 +230,30 @@ impl pallet_assets::Config for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
+
+parameter_types! {
+	pub const NativeCurrencyId: u32 = 0;
+    pub const AMMPalletId: PalletId = PalletId(*b"ksm/ammp");
+    pub DefaultLpFee: Permill = Permill::from_rational(30u32, 10000u32);        // 0.30%
+    pub const MinimumLiquidity: u128 = 1_000u128;
+	pub OneAccount: AccountId = AccountId::from([1u8; 32]);
+	pub const MaxLengthRoute: u8 = 10;
+}
+
+impl pallet_dex::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Assets = Assets;
+    type PalletId = AMMPalletId;
+    type LockAccountId = OneAccount;
+    type AMMWeightInfo = pallet_dex::weights::SubstrateWeight<Runtime>;
+    type CreatePoolOrigin = EnsureSigned<AccountId>;
+    type ProtocolFeeUpdateOrigin = EnsureRoot<AccountId>;
+    type LpFee = DefaultLpFee;
+    type MinimumLiquidity = MinimumLiquidity;
+    type MaxLengthRoute = MaxLengthRoute;
+    type GetNativeCurrencyId = NativeCurrencyId;
+}
+
 
 
 

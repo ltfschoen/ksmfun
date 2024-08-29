@@ -52,6 +52,7 @@ pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-assets = { workspace = true }
+pallet-dex = { workspace = true, default-features = false }
 
 # Substrate	Primitives
 sp-api = { workspace = true }
@@ -143,6 +144,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"pallet-dex/std",
 ]
 
 runtime-benchmarks = [
