@@ -39,7 +39,7 @@ use frame_support::{
     require_transactional,
     traits::{
         // fungibles::{Inspect, Mutate, Transfer},
-        fungibles::{Inspect, Mutate},
+        fungibles::{Inspect, Mutate, Create, metadata::Mutate as MetadataMutate},
         Get, IsType,
         tokens::{Preservation, Precision, Fortitude}
     },
@@ -74,6 +74,8 @@ pub type BalanceOf<T, I = ()> =
 
 #[frame_support::pallet]
 pub mod pallet {
+    use frame_system::ensure_root;
+
     use super::*;
 
     pub type Amounts<T, I> = sp_std::vec::Vec<BalanceOf<T, I>>;
@@ -88,7 +90,9 @@ pub mod pallet {
         // type Assets: Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
         type Assets: 
             Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
-            + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+            + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+            + Create<Self::AccountId>
+            + MetadataMutate<Self::AccountId>;
 
         #[pallet::constant]
         type PalletId: Get<PalletId>;
@@ -232,6 +236,13 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn protocol_fee)]
     pub type ProtocolFee<T: Config<I>, I: 'static = ()> = StorageValue<_, Ratio, ValueQuery>;
+
+    // #[pallet::type_value]
+    // pub fn DefaultRegistrationFees() -> u128 { 100u128 }
+
+    #[pallet::storage]
+    #[pallet::getter(fn next_asset_id)]
+    pub type NextAssetId<T: Config<I>, I: 'static = ()> = StorageValue<_, CurrencyId, ValueQuery>;
 
     /// Who/where to send the protocol fees
     #[pallet::storage]
@@ -390,7 +401,9 @@ pub mod pallet {
             lptoken_receiver: T::AccountId,
             lp_token_id: AssetIdOf<T, I>,
         ) -> DispatchResultWithPostInfo {
-            T::CreatePoolOrigin::ensure_origin(origin)?;
+            // T::CreatePoolOrigin::ensure_origin(origin)?;
+
+            let _who = ensure_root(origin)?;
 
             let (is_inverted, base_asset, quote_asset) = Self::sort_assets(pair)?;
             ensure!(
@@ -495,6 +508,48 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             Pallet::<T, I>::do_swap(&who, (asset_in, asset_out), amount_in)?;
+            Ok(().into())
+        }
+
+        #[pallet::call_index(6)]
+        #[pallet::weight(T::AMMWeightInfo::update_protocol_fee_receiver())]
+        #[transactional]
+        pub fn ksm_fun(
+            origin: OriginFor<T>,
+           
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            let mut current_asset_id = NextAssetId::<T, I>::get();
+
+            if current_asset_id == 0 {
+                current_asset_id = 1;
+            }
+
+            let new_asset_id = current_asset_id;
+            
+            
+
+            //current pallet address is the owner of the asset.
+            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; //todo is 0 is correct?
+            let _ = T::Assets::set(current_asset_id, &Self::account_id(), "DogeSama".as_bytes().to_vec(), "DogeSama".as_bytes().to_vec(), 12);
+            let _ = T::Assets::mint_into(current_asset_id, &who, 1_000_000_000); //todo get total supply from user
+
+            current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
+
+            //set metadata from user input
+
+            //create a pool with the new asset
+
+            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; //todo is 0 is correct?
+            current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
+
+            NextAssetId::<T, I>::put(current_asset_id);
+
+            use frame_system::RawOrigin::Root;
+
+            Pallet::<T, I>::create_pool(Root.into(), (T::GetNativeCurrencyId::get(), new_asset_id), (1_000_000_000u128.into(), 1_000_000_000u128.into()), Self::account_id(), current_asset_id)?;
+
             Ok(().into())
         }
     }
