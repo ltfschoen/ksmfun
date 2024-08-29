@@ -28,8 +28,12 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { optional = true, workspace = true }
 sp-core = { workspace = true }
-sp-std = { workspace = true }
+pallet-assets = { workspace = true }
 sp-arithmetic = { workspace = true }
+serde = { workspace = true, features = ['derive'], optional = true }
+num-traits = { workspace = true }
+sp-std = { workspace = true }
+num-bigint = { workspace = true }
 
 [dev-dependencies]
 sp-io = { workspace = true, default-features = true }
@@ -38,6 +42,7 @@ pallet-balances = { workspace = true, default-features = true }
 [features]
 default = ["std"]
 std = [
+	"serde",
 	"codec/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
@@ -48,8 +53,11 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std",
+	"pallet-assets/std",
 	"sp-arithmetic/std",
+	"num-traits/std",
+	"sp-std/std",
+	"num-bigint/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
