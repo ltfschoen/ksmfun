@@ -280,6 +280,9 @@ mod runtime {
 	#[runtime::pallet_index(12)]
 	pub type Assets = pallet_assets;
 
+	#[runtime::pallet_index(13)]
+	pub type Dex = pallet_dex;
+
 	// Governance
 	#[runtime::pallet_index(15)]
 	pub type Sudo = pallet_sudo;
