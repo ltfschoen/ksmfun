@@ -10535,12 +10535,18 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "log",
+ "num-bigint",
+ "num-traits",
+ "pallet-assets",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
+ "serde",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std 14.0.0",
 ]
 
 [[package]]
