@@ -482,6 +482,21 @@ pub mod pallet {
             ));
             Ok(().into())
         }
+
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::AMMWeightInfo::update_protocol_fee_receiver())]
+        #[transactional]
+        pub fn swap_x(
+            origin: OriginFor<T>,
+            asset_in: AssetIdOf<T, I>,
+            asset_out: AssetIdOf<T, I>,
+            amount_in: BalanceOf<T, I>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Pallet::<T, I>::do_swap(&who, (asset_in, asset_out), amount_in)?;
+            Ok(().into())
+        }
     }
 }
 
