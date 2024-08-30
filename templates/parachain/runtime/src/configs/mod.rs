@@ -160,38 +160,6 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
 }
 
-// #[derive(
-// 	Encode,
-// 	Decode,
-// 	MaxEncodedLen,
-// 	Eq,
-// 	PartialEq,
-// 	Copy,
-// 	Clone,
-// 	RuntimeDebug,
-// 	PartialOrd,
-// 	Ord,
-// 	TypeInfo,
-// 	CompactAs,
-// 	Hash,
-// 	Serialize,
-// 	Deserialize,
-// )]
-// #[repr(transparent)]
-// #[serde(transparent)]
-// pub struct CurrencyId(pub u128);
-
-// pub type AssetId = u128;
-
-// impl pallet_assets::Config for Runtime{
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type Balance = Balance;
-// 	type AssetId = AssetId;
-// 	type NativeCurrency = Balances;
-
-
-// }
-
 pub type AssetIdForTrustBackedAssets = u32;
 
 pub const KSM: Balance = 1_000_000_000_000;
@@ -201,9 +169,9 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const MetadataDepositBase: Balance = KSM;
-	pub const ApprovalDeposit: Balance = KSM;
-	pub const AssetAccountDeposit: Balance = KSM;
+	pub const MetadataDepositBase: Balance = 0;
+	pub const ApprovalDeposit: Balance = 0;
+	pub const AssetAccountDeposit: Balance = 0;
 	pub const MetadataDepositPerByte: Balance = 0;
 	pub const AssetsStringLimit: u32 = 50;
 }
