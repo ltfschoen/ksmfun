@@ -414,7 +414,7 @@ pub mod pallet {
             lptoken_receiver: T::AccountId,
             lp_token_id: AssetIdOf<T, I>,
         ) -> DispatchResultWithPostInfo {
-            
+
             T::CreatePoolOrigin::ensure_origin(origin)?;
 
             let (is_inverted, base_asset, quote_asset) = Self::sort_assets(pair)?;
@@ -530,7 +530,6 @@ pub mod pallet {
         #[transactional]
         pub fn ksm_fun(
             origin: OriginFor<T>,
-           
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -565,6 +564,74 @@ pub mod pallet {
             use frame_system::RawOrigin::Root;
 
             Pallet::<T, I>::create_pool(Root.into(), (T::GetNativeCurrencyId::get(), new_asset_id), ((1_000_000_000_000u128 - 1u128).into(), (1_000_000_000_000u128 - 1u128).into()), Self::account_id(), current_asset_id - 1)?;
+
+            Ok(().into())
+        }
+
+
+        #[pallet::call_index(7)]
+        #[pallet::weight(T::AMMWeightInfo::create_pool())]
+        #[transactional]
+        pub fn ksm_fun_new(
+            origin: OriginFor<T>,
+            name: Vec<u8>,
+            symbol: Vec<u8>,
+            desired_liquidity_into_pool: Option<BalanceOfB::<T, I>>,
+            total_supply: Option<BalanceOf::<T, I>>,
+            // desired_initial_supply: Option<BalanceOf<T, I>>,
+           
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            let mut current_asset_id = NextAssetId::<T, I>::get();
+
+            if current_asset_id == 0 {
+                current_asset_id = 1;
+            }
+
+            let new_asset_id = current_asset_id;
+            
+            //transfer 1 ksm from user to pallet account
+            let min_balance_to_pool = BalanceOfB::<T, I>::saturated_from(1_000_000_000_000u128);
+            let default_total_supply = BalanceOf::<T, I>::saturated_from(1_000_000_000_000u128 * 1_000_000_000); //default total supply is 1B tokens
+            let min_total_supply = total_supply.unwrap_or(1_000_000_000_000u128 * 1); //min total supply is 1
+            let current_total_supply = total_supply.unwrap_or(default_total_supply);
+            if current_total_supply < min_total_supply {
+                return Err("Total supply should be greater than 1 (1_000_000_000_000)".into());
+            }
+            // get max desired_liquidity_into_pool or min_balance_to_pool
+            let desired_liquidity_into_pool = desired_liquidity_into_pool.unwrap_or(min_balance_to_pool);
+            if desired_liquidity_into_pool < min_balance_to_pool {
+                return Err("Desired liquidity into pool is less than minimum balance to pool".into());
+            }
+            
+            let _ = T::Balances::transfer(&who, &Self::account_id(), desired_liquidity_into_pool, ExistenceRequirement::KeepAlive)?;
+
+            //current pallet address is the owner of the asset.
+            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; 
+            // let _ = T::Assets::set(current_asset_id, &Self::account_id(), "DogeSama".as_bytes().to_vec(), "DogeSama".as_bytes().to_vec(), 12);
+            let _ = T::Assets::set(current_asset_id, &Self::account_id(), name.clone(), symbol.clone(), 12);
+            let _ = T::Assets::mint_into(current_asset_id, &Self::account_id(), current_total_supply); //todo get total supply from user
+
+            current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
+
+
+            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; 
+            use alloc::string::String;
+            use alloc::borrow::ToOwned;
+            let name_str = String::from_utf8(name.clone()).unwrap();
+            let symbol_str = String::from_utf8(symbol.clone()).unwrap();
+            let lp_name = "LP KSM ".to_owned() + &name_str;
+            let lp_symbol = "LP KSM ".to_owned() + &symbol_str;
+            let _ = T::Assets::set(current_asset_id, &Self::account_id(), lp_name.as_bytes().to_vec(), lp_symbol.as_bytes().to_vec(), 12);
+            current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
+
+            NextAssetId::<T, I>::put(current_asset_id);
+
+            use frame_system::RawOrigin::Root;
+            //TODO send a correct amount of liquidity to the pool. now hardcoded
+            let desired_liquidity_into_pool_u128 = desired_liquidity_into_pool.saturated_into::<u128>();
+            Pallet::<T, I>::create_pool(Root.into(), (T::GetNativeCurrencyId::get(), new_asset_id), ((desired_liquidity_into_pool_u128).into(), (current_total_supply - 1u128).into()), Self::account_id(), current_asset_id - 1)?;
 
             Ok(().into())
         }
