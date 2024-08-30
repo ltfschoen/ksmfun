@@ -33,14 +33,14 @@ use frame_support::{
 	dispatch::DispatchClass,
 	parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin, VariantCountOf,
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, SortedMembers, TransformOrigin, VariantCountOf
 	},
 	weights::{ConstantMultiplier, Weight},
 	PalletId,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSigned
+	EnsureRoot, EnsureSigned, EnsureSignedBy
 };
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
@@ -182,7 +182,7 @@ impl pallet_assets::Config for Runtime {
 	type AssetId = AssetIdForTrustBackedAssets;
 	type AssetIdParameter = codec::Compact<AssetIdForTrustBackedAssets>;
 	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSignedBy<OneAccount, AccountId>>; //no one able to create asset directly calling assets pallet, only via dex launchpad.
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
 	type MetadataDepositBase = MetadataDepositBase;
@@ -211,6 +211,14 @@ parameter_types! {
 	pub const MaxLengthRoute: u8 = 10;
 }
 
+use alloc::vec;
+use alloc::vec::Vec;
+impl SortedMembers<AccountId> for OneAccount{
+	fn sorted_members() -> Vec<AccountId> {
+		vec![OneAccount::get()]
+	}
+}
+
 impl pallet_dex::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 	type Balances = Balances;
@@ -218,7 +226,7 @@ impl pallet_dex::Config for Runtime {
     type PalletId = AMMPalletId;
     type LockAccountId = OneAccount;
     type AMMWeightInfo = pallet_dex::weights::SubstrateWeight<Runtime>;
-    type CreatePoolOrigin = EnsureSigned<AccountId>;
+    type CreatePoolOrigin = EnsureRoot<AccountId>;
     type ProtocolFeeUpdateOrigin = EnsureRoot<AccountId>;
     type LpFee = DefaultLpFee;
     type MinimumLiquidity = MinimumLiquidity;

@@ -414,9 +414,8 @@ pub mod pallet {
             lptoken_receiver: T::AccountId,
             lp_token_id: AssetIdOf<T, I>,
         ) -> DispatchResultWithPostInfo {
-            // T::CreatePoolOrigin::ensure_origin(origin)?;
-
-            let _who = ensure_root(origin)?;
+            
+            T::CreatePoolOrigin::ensure_origin(origin)?;
 
             let (is_inverted, base_asset, quote_asset) = Self::sort_assets(pair)?;
             ensure!(
