@@ -46,6 +46,9 @@ use frame_support::{
     
     transactional, Blake2_128Concat, PalletId,
 };
+
+use frame_support::traits::Currency;
+use frame_support::traits::ExistenceRequirement;
 use sp_core::U256;
 use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 use crate::types::{Pool};
@@ -72,8 +75,11 @@ pub type AssetIdOf<T, I = ()> =
 pub type BalanceOf<T, I = ()> =
     <<T as Config<I>>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
+pub type BalanceOfB<T, I = ()> = <<T as pallet::Config<I>>::Balances as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 #[frame_support::pallet]
 pub mod pallet {
+    use frame_support::traits::Currency;
     use frame_system::ensure_root;
 
     use super::*;
@@ -84,6 +90,13 @@ pub mod pallet {
     pub trait Config<I: 'static = ()>: frame_system::Config {
         type RuntimeEvent: From<Event<Self, I>>
             + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+        
+        type Balances: 
+            // Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+            // + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+            // + Create<Self::AccountId>
+            Currency<Self::AccountId>;
 
         /// Currency type for deposit/withdraw assets to/from amm
         /// module
@@ -433,6 +446,8 @@ pub mod pallet {
                 lp_token_id,
             ));
 
+            // return Ok(().into());
+
             Self::do_add_liquidity(
                 &lptoken_receiver,
                 &mut pool,
@@ -512,7 +527,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(6)]
-        #[pallet::weight(T::AMMWeightInfo::update_protocol_fee_receiver())]
+        #[pallet::weight(T::AMMWeightInfo::create_pool())]
         #[transactional]
         pub fn ksm_fun(
             origin: OriginFor<T>,
@@ -528,12 +543,13 @@ pub mod pallet {
 
             let new_asset_id = current_asset_id;
             
-            
+            //transfer 1 ksm from user to pallet account
+            let _ = T::Balances::transfer(&who, &Self::account_id(), BalanceOfB::<T, I>::saturated_from(1_000_000_000_000u128), ExistenceRequirement::KeepAlive)?;
 
             //current pallet address is the owner of the asset.
-            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; //todo is 0 is correct?
+            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; 
             let _ = T::Assets::set(current_asset_id, &Self::account_id(), "DogeSama".as_bytes().to_vec(), "DogeSama".as_bytes().to_vec(), 12);
-            let _ = T::Assets::mint_into(current_asset_id, &who, 1_000_000_000); //todo get total supply from user
+            let _ = T::Assets::mint_into(current_asset_id, &Self::account_id(), 1_000_000_000_000); //todo get total supply from user
 
             current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
 
@@ -541,14 +557,15 @@ pub mod pallet {
 
             //create a pool with the new asset
 
-            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; //todo is 0 is correct?
+            T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; 
+            let _ = T::Assets::set(current_asset_id, &Self::account_id(), "LPLPLPLP".as_bytes().to_vec(), "LPLPLPLP".as_bytes().to_vec(), 12);
             current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
 
             NextAssetId::<T, I>::put(current_asset_id);
 
             use frame_system::RawOrigin::Root;
 
-            Pallet::<T, I>::create_pool(Root.into(), (T::GetNativeCurrencyId::get(), new_asset_id), (1_000_000_000u128.into(), 1_000_000_000u128.into()), Self::account_id(), current_asset_id)?;
+            Pallet::<T, I>::create_pool(Root.into(), (T::GetNativeCurrencyId::get(), new_asset_id), ((1_000_000_000_000u128 - 1u128).into(), (1_000_000_000_000u128 - 1u128).into()), Self::account_id(), current_asset_id - 1)?;
 
             Ok(().into())
         }
@@ -928,20 +945,43 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
         T::Assets::mint_into(pool.lp_token_id, who, liquidity)?;
 
-        T::Assets::transfer(
-            base_asset,
-            who,
-            &Self::account_id(),
-            ideal_base_amount,
-            if base_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
-        )?;
-        T::Assets::transfer(
-            quote_asset,
-            who,
-            &Self::account_id(),
-            ideal_quote_amount,
-            if quote_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
-        )?;
+        if base_asset == T::GetNativeCurrencyId::get(){
+            T::Balances::transfer(
+                who,
+                &Self::account_id(),
+                BalanceOfB::<T, I>::saturated_from(ideal_base_amount),
+                ExistenceRequirement::KeepAlive,
+            )?;
+        }
+        else{
+            T::Assets::transfer(
+                base_asset,
+                who,
+                &Self::account_id(),
+                ideal_base_amount,
+                if base_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
+            )?;
+        }
+
+        if quote_asset == T::GetNativeCurrencyId::get(){
+            T::Balances::transfer(
+                who,
+                &Self::account_id(),
+                BalanceOfB::<T, I>::saturated_from(ideal_quote_amount),
+                ExistenceRequirement::KeepAlive,
+            )?;
+        }
+        else{
+            T::Assets::transfer(
+                quote_asset,
+                who,
+                &Self::account_id(),
+                ideal_quote_amount,
+                if quote_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
+            )?;
+        }
+        
+        
 
         if Self::protocol_fee_on() {
             // we cannot hold k_last for really large values
@@ -1010,20 +1050,44 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
         T::Assets::burn_from(pool.lp_token_id, who, liquidity, Preservation::Expendable, Precision::Exact, Fortitude::Polite)?;
 
-        T::Assets::transfer(
-            base_asset,
-            &Self::account_id(),
-            who,
-            base_amount,
-            if base_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
-        )?;
-        T::Assets::transfer(
-            quote_asset,
-            &Self::account_id(),
-            who,
-            quote_amount,
-            if quote_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
-        )?;
+        if base_asset == T::GetNativeCurrencyId::get(){
+            T::Balances::transfer(
+                &Self::account_id(),
+                who,
+                BalanceOfB::<T, I>::saturated_from(base_amount),
+                ExistenceRequirement::KeepAlive,
+            )?;
+        }
+        else{
+            T::Assets::transfer(
+                base_asset,
+                &Self::account_id(),
+                who,
+                base_amount,
+                if base_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
+            )?;
+        }
+
+        if quote_asset == T::GetNativeCurrencyId::get(){
+            T::Balances::transfer(
+                &Self::account_id(),
+                who,
+                BalanceOfB::<T, I>::saturated_from(quote_amount),
+                ExistenceRequirement::KeepAlive,
+            )?;
+        }
+        else{
+            T::Assets::transfer(
+                quote_asset,
+                &Self::account_id(),
+                who,
+                quote_amount,
+                if quote_asset == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
+            )?;
+        }
+
+        
+        
 
         if Self::protocol_fee_on() {
             // we cannot hold k_last for really large values
@@ -1174,21 +1238,42 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
                 Self::do_update_oracle(pool)?;
 
-                T::Assets::transfer(
-                    asset_in,
-                    who,
-                    &Self::account_id(),
-                    amount_in,
-                    // asset_in == T::GetNativeCurrencyId::get(), // should keep alive if is native
-                    if asset_in == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
-                )?;
-                T::Assets::transfer(
-                    asset_out,
-                    &Self::account_id(),
-                    who,
-                    amount_out,
-                    if asset_out == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
-                )?;
+                if asset_in == T::GetNativeCurrencyId::get(){
+                    T::Balances::transfer(
+                        who,
+                        &Self::account_id(),
+                        BalanceOfB::<T, I>::saturated_from(amount_in),
+                        ExistenceRequirement::KeepAlive,
+                    )?;
+                }
+                else{
+                    T::Assets::transfer(
+                        asset_in,
+                        who,
+                        &Self::account_id(),
+                        amount_in,
+                        // asset_in == T::GetNativeCurrencyId::get(), // should keep alive if is native
+                        if asset_in == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
+                    )?;
+                }
+
+                if asset_out == T::GetNativeCurrencyId::get(){
+                    T::Balances::transfer(
+                        &Self::account_id(),
+                        who,
+                        BalanceOfB::<T, I>::saturated_from(amount_out),
+                        ExistenceRequirement::KeepAlive,
+                    )?;
+                }
+                else{
+                    T::Assets::transfer(
+                        asset_out,
+                        &Self::account_id(),
+                        who,
+                        amount_out,
+                        if asset_out == T::GetNativeCurrencyId::get() { Preservation::Preserve } else { Preservation::Protect }, // should keep alive if is native
+                    )?;
+                }
 
                 log::trace!(
                     target: "amm::do_trade",

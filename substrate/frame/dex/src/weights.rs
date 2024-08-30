@@ -79,9 +79,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Account (r:6 w:6)
 	// Storage: System Account (r:2 w:2)
 	fn create_pool() -> Weight {
-		Weight::from_parts(217_917_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(13 as u64))
-			.saturating_add(T::DbWeight::get().writes(13 as u64))
+		Weight::from_parts(417_917_000 as u64, 0)
+			.saturating_add(T::DbWeight::get().reads(26 as u64))
+			.saturating_add(T::DbWeight::get().writes(26 as u64))
 	}
 	// Storage: AMM ProtocolFee (r:0 w:1)
   fn update_protocol_fee() -> Weight {
@@ -119,9 +119,9 @@ impl WeightInfo for () {
 	// Storage: Assets Account (r:6 w:6)
 	// Storage: System Account (r:2 w:2)
 	fn create_pool() -> Weight {
-		Weight::from_parts(217_917_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(13 as u64))
-			.saturating_add(RocksDbWeight::get().writes(13 as u64))
+		Weight::from_parts(417_917_000 as u64, 0)
+			.saturating_add(RocksDbWeight::get().reads(26 as u64))
+			.saturating_add(RocksDbWeight::get().writes(26 as u64))
 	}
 	// Storage: AMM ProtocolFee (r:0 w:1)
 	fn update_protocol_fee() -> Weight {

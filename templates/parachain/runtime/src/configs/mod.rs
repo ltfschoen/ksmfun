@@ -48,7 +48,7 @@ use polkadot_runtime_common::{
 	xcm_sender::NoPriceForMessageDelivery, BlockHashCount, SlowAdjustingFeeUpdate,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::{Perbill, Permill};
+use sp_runtime::{traits::AccountIdConversion, Perbill, Permill};
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::BodyId;
 
@@ -233,15 +233,19 @@ impl pallet_assets::Config for Runtime {
 
 parameter_types! {
 	pub const NativeCurrencyId: u32 = 0;
-    pub const AMMPalletId: PalletId = PalletId(*b"ksm/ammp");
+    pub const AMMPalletId: PalletId = PalletId(*b"ksm/ammp"); //5EYCAe5hjM7JDA8rwiB13ZPdfp2Q5hZomu1R6xg85ATvd2bX
+    pub const Lockable: PalletId = PalletId(*b"lockable");    //5EYCAe5hvnXnqNCf8U8ZBzCkeSQCsPVM8rBn5CQxXuoqE1NE
     pub DefaultLpFee: Permill = Permill::from_rational(30u32, 10000u32);        // 0.30%
     pub const MinimumLiquidity: u128 = 1_000u128;
-	pub OneAccount: AccountId = AccountId::from([1u8; 32]);
+	// pub OneAccount: AccountId = AccountId::from([1u8; 32]);
+	pub OneAccount: AccountId = Lockable::get().into_account_truncating();
+	
 	pub const MaxLengthRoute: u8 = 10;
 }
 
 impl pallet_dex::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+	type Balances = Balances;
     type Assets = Assets;
     type PalletId = AMMPalletId;
     type LockAccountId = OneAccount;
