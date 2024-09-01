@@ -551,9 +551,6 @@ pub mod pallet {
 
             current_asset_id = current_asset_id.checked_add(1).ok_or(Error::<T, I>::ConversionToU128Failed)?;
 
-            //set metadata from user input
-
-            //create a pool with the new asset
 
             T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; 
             let _ = T::Assets::set(current_asset_id, &Self::account_id(), "LPLPLPLP".as_bytes().to_vec(), "LPLPLPLP".as_bytes().to_vec(), 12);
@@ -578,10 +575,9 @@ pub mod pallet {
             symbol: Vec<u8>,
             desired_liquidity_into_pool: Option<BalanceOfB::<T, I>>,
             total_supply: Option<BalanceOf::<T, I>>,
-            // desired_initial_supply: Option<BalanceOf<T, I>>,
-           
+            amount_ksm_to_use_for_buying: Option<BalanceOfB::<T, I>>,
         ) -> DispatchResultWithPostInfo {
-            let who = ensure_signed(origin)?;
+            let who = ensure_signed(origin.clone())?;
 
             let mut current_asset_id = NextAssetId::<T, I>::get();
 
@@ -591,7 +587,6 @@ pub mod pallet {
 
             let new_asset_id = current_asset_id;
             
-            //transfer 1 ksm from user to pallet account
             let min_balance_to_pool = BalanceOfB::<T, I>::saturated_from(1_000_000_000_000u128);
             let default_total_supply = BalanceOf::<T, I>::saturated_from(1_000_000_000_000u128 * 1_000_000_000); //default total supply is 1B tokens
             let min_total_supply = total_supply.unwrap_or(1_000_000_000_000u128 * 1); //min total supply is 1
@@ -599,7 +594,7 @@ pub mod pallet {
             if current_total_supply < min_total_supply {
                 return Err("Total supply should be greater than 1 (1_000_000_000_000)".into());
             }
-            // get max desired_liquidity_into_pool or min_balance_to_pool
+
             let desired_liquidity_into_pool = desired_liquidity_into_pool.unwrap_or(min_balance_to_pool);
             if desired_liquidity_into_pool < min_balance_to_pool {
                 return Err("Desired liquidity into pool is less than minimum balance to pool".into());
@@ -607,9 +602,8 @@ pub mod pallet {
             
             let _ = T::Balances::transfer(&who, &Self::account_id(), desired_liquidity_into_pool, ExistenceRequirement::KeepAlive)?;
 
-            //current pallet address is the owner of the asset.
             T::Assets::create(current_asset_id, Self::account_id(), false, 1u128.into())?; 
-            // let _ = T::Assets::set(current_asset_id, &Self::account_id(), "DogeSama".as_bytes().to_vec(), "DogeSama".as_bytes().to_vec(), 12);
+
             let _ = T::Assets::set(current_asset_id, &Self::account_id(), name.clone(), symbol.clone(), 12);
             let _ = T::Assets::mint_into(current_asset_id, &Self::account_id(), current_total_supply); //todo get total supply from user
 
@@ -629,9 +623,14 @@ pub mod pallet {
             NextAssetId::<T, I>::put(current_asset_id);
 
             use frame_system::RawOrigin::Root;
-            //TODO send a correct amount of liquidity to the pool. now hardcoded
+
             let desired_liquidity_into_pool_u128 = desired_liquidity_into_pool.saturated_into::<u128>();
             Pallet::<T, I>::create_pool(Root.into(), (T::GetNativeCurrencyId::get(), new_asset_id), ((desired_liquidity_into_pool_u128).into(), (current_total_supply - 1u128).into()), Self::account_id(), current_asset_id - 1)?;
+
+            if let Some(ksm_amount) = amount_ksm_to_use_for_buying {
+                let ksm_amount: u128 = ksm_amount.saturated_into::<u128>();
+                Pallet::<T, I>::swap_x(origin, T::GetNativeCurrencyId::get(), new_asset_id, ksm_amount)?;
+            };
 
             Ok(().into())
         }
